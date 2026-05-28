@@ -21,7 +21,6 @@ using namespace esp_matter::endpoint;
 using namespace chip::app::Clusters;
 
 static uint16_t garage_endpoint_id = 0;
-static volatile bool resetting_state = false;
 
 static void pulse_relay(void *arg)
 {
@@ -31,12 +30,10 @@ static void pulse_relay(void *arg)
     gpio_set_level(RELAY_GPIO, 0);
     ESP_LOGI(TAG, "Relay pulse complete");
 
-    resetting_state = true;
     chip::DeviceLayer::PlatformMgr().LockChipStack();
     esp_matter_attr_val_t val = esp_matter_bool(false);
     attribute::update(garage_endpoint_id, OnOff::Id, OnOff::Attributes::OnOff::Id, &val);
     chip::DeviceLayer::PlatformMgr().UnlockChipStack();
-    resetting_state = false;
 
     vTaskDelete(NULL);
 }
@@ -52,10 +49,9 @@ static esp_err_t app_attribute_update_cb(attribute::callback_type_t type, uint16
 {
     if (type == POST_UPDATE && endpoint_id == garage_endpoint_id &&
         cluster_id == OnOff::Id && attribute_id == OnOff::Attributes::OnOff::Id) {
-        if (resetting_state) {
-            return ESP_OK;
+        if (val->val.b) {
+            trigger_relay();
         }
-        trigger_relay();
     }
     return ESP_OK;
 }
