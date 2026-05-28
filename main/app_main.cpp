@@ -1,13 +1,12 @@
 #include <esp_err.h>
 #include <esp_log.h>
 #include <esp_matter.h>
-#include <esp_matter_core.h>
 #include <nvs_flash.h>
 #include <driver/gpio.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <iot_button.h>
-#include <app_reset.h>
+#include <app/server/Server.h>
 
 static const char *TAG = "garage_relay";
 
@@ -74,6 +73,23 @@ static void boot_button_long_press_cb(void *arg, void *data)
     esp_matter::factory_reset();
 }
 
+static void app_event_cb(const ChipDeviceEvent *event, intptr_t arg)
+{
+    switch (event->Type) {
+    case chip::DeviceLayer::DeviceEventType::kCommissioningComplete:
+        ESP_LOGI(TAG, "Commissioning complete");
+        break;
+    case chip::DeviceLayer::DeviceEventType::kFabricRemoved:
+        ESP_LOGI(TAG, "Fabric removed, opening commissioning window");
+        break;
+    case chip::DeviceLayer::DeviceEventType::kFabricCommitted:
+        ESP_LOGI(TAG, "Fabric committed");
+        break;
+    default:
+        break;
+    }
+}
+
 static void init_relay_gpio()
 {
     gpio_config_t io_conf = {};
@@ -125,7 +141,7 @@ extern "C" void app_main()
     ESP_LOGI(TAG, "Boot button (GPIO%d) triggers relay, long press = factory reset", BOOT_BUTTON_GPIO);
 
     // Start Matter (QR code and manual pairing code are printed automatically by the CHIP stack)
-    esp_matter::start(app_attribute_update_cb);
+    esp_matter::start(app_event_cb);
 
     ESP_LOGI(TAG, "Matter started successfully - pairing info printed above by CHIP stack");
 }
