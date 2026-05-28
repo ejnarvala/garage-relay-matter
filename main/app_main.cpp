@@ -6,6 +6,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <iot_button.h>
+#include <button_gpio.h>
 
 static const char *TAG = "garage_relay";
 
@@ -108,7 +109,7 @@ static void init_boot_button()
     gpio_cfg.active_level = 0;
 
     button_handle_t btn = NULL;
-    iot_button_create(&btn_cfg, &gpio_cfg, &btn);
+    iot_button_new_gpio_device(&btn_cfg, &gpio_cfg, &btn);
     iot_button_register_cb(btn, BUTTON_PRESS_DOWN, NULL, boot_button_cb, NULL);
     iot_button_register_cb(btn, BUTTON_LONG_PRESS_START, NULL, boot_button_long_press_cb, NULL);
 }
