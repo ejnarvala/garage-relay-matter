@@ -6,7 +6,6 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <iot_button.h>
-#include <app/server/Server.h>
 
 static const char *TAG = "garage_relay";
 
@@ -29,7 +28,6 @@ static void pulse_relay(void *arg)
     gpio_set_level(RELAY_GPIO, 0);
     ESP_LOGI(TAG, "Relay pulse complete");
 
-    // Reset the on/off attribute back to off
     esp_matter_attr_val_t val = esp_matter_bool(false);
     attribute::update(garage_endpoint_id, OnOff::Id, OnOff::Attributes::OnOff::Id, &val);
 
@@ -105,42 +103,38 @@ static void init_relay_gpio()
 static void init_boot_button()
 {
     button_config_t btn_cfg = {};
-    btn_cfg.type = BUTTON_TYPE_GPIO;
-    btn_cfg.gpio_button_config.gpio_num = BOOT_BUTTON_GPIO;
-    btn_cfg.gpio_button_config.active_level = 0;
+    button_gpio_config_t gpio_cfg = {};
+    gpio_cfg.gpio_num = BOOT_BUTTON_GPIO;
+    gpio_cfg.active_level = 0;
 
-    button_handle_t btn = iot_button_create(&btn_cfg);
-    iot_button_register_cb(btn, BUTTON_PRESS_DOWN, boot_button_cb, NULL);
-    iot_button_register_cb(btn, BUTTON_LONG_PRESS_START, boot_button_long_press_cb, NULL);
+    button_handle_t btn = NULL;
+    iot_button_create(&btn_cfg, &gpio_cfg, &btn);
+    iot_button_register_cb(btn, BUTTON_PRESS_DOWN, NULL, boot_button_cb, NULL);
+    iot_button_register_cb(btn, BUTTON_LONG_PRESS_START, NULL, boot_button_long_press_cb, NULL);
 }
 
 extern "C" void app_main()
 {
-    // Initialize NVS
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         nvs_flash_erase();
         nvs_flash_init();
     }
 
-    // Initialize relay GPIO and boot button
     init_relay_gpio();
     init_boot_button();
 
-    // Create Matter node
     node::config_t node_config;
     node_t *node = node::create(&node_config, app_attribute_update_cb, app_identification_cb);
 
-    // Create on/off plugin unit endpoint (shows as switch in Apple Home)
-    on_off_plugin_unit::config_t plugin_config;
+    on_off_plug_in_unit::config_t plugin_config;
     plugin_config.on_off.on_off = false;
-    endpoint_t *endpoint = on_off_plugin_unit::create(node, &plugin_config, ENDPOINT_FLAG_NONE, NULL);
+    endpoint_t *endpoint = on_off_plug_in_unit::create(node, &plugin_config, ENDPOINT_FLAG_NONE, NULL);
     garage_endpoint_id = endpoint::get_id(endpoint);
 
     ESP_LOGI(TAG, "Garage relay on GPIO%d, endpoint=%d", RELAY_GPIO, garage_endpoint_id);
     ESP_LOGI(TAG, "Boot button (GPIO%d) triggers relay, long press = factory reset", BOOT_BUTTON_GPIO);
 
-    // Start Matter (QR code and manual pairing code are printed automatically by the CHIP stack)
     esp_matter::start(app_event_cb);
 
     ESP_LOGI(TAG, "Matter started successfully - pairing info printed above by CHIP stack");
