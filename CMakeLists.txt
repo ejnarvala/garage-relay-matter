@@ -13,6 +13,12 @@ set(MATTER_SDK_PATH ${ESP_MATTER_PATH}/connectedhomeip/connectedhomeip)
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 include(${ESP_MATTER_PATH}/examples/common/cmake_common/components_include.cmake)
 
+set(EXCLUDE_COMPONENTS
+    "esp_matter_bridge"
+    "esp_matter_controller"
+    "esp_matter_ota_provider"
+    "esp_matter_rainmaker")
+
 set(EXTRA_COMPONENT_DIRS
     "${MATTER_SDK_PATH}/config/esp32/components"
     "${ESP_MATTER_PATH}/components"
