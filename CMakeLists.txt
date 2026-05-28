@@ -10,20 +10,21 @@ set(PROJECT_VER_NUMBER 1)
 set(ESP_MATTER_PATH $ENV{ESP_MATTER_PATH})
 set(MATTER_SDK_PATH ${ESP_MATTER_PATH}/connectedhomeip/connectedhomeip)
 
-include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-include(${ESP_MATTER_PATH}/examples/common/cmake_common/components_include.cmake)
-
 set(EXCLUDE_COMPONENTS
     "esp_matter_bridge"
     "esp_matter_controller"
     "esp_matter_ota_provider"
-    "esp_matter_rainmaker")
+    "esp_matter_rainmaker"
+    "app_bridge")
 
 set(EXTRA_COMPONENT_DIRS
     "${MATTER_SDK_PATH}/config/esp32/components"
     "${ESP_MATTER_PATH}/components"
     "${ESP_MATTER_PATH}/examples/common"
     ${extra_components_dirs_append})
+
+include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+include(${ESP_MATTER_PATH}/examples/common/cmake_common/components_include.cmake)
 
 project(garage_relay)
 
