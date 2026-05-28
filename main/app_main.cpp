@@ -13,7 +13,7 @@ static const char *TAG = "garage_relay";
 
 #define RELAY_GPIO GPIO_NUM_4
 #define BOOT_BUTTON_GPIO GPIO_NUM_9
-#define RELAY_PULSE_MS 500
+#define RELAY_PULSE_MS 750
 
 using namespace esp_matter;
 using namespace esp_matter::attribute;
