@@ -1,8 +1,8 @@
 #include <esp_err.h>
 #include <esp_log.h>
 #include <esp_matter.h>
-#include <esp_matter_core.h>
 #include <nvs_flash.h>
+#include <platform/PlatformManager.h>
 #include <driver/gpio.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -32,10 +32,10 @@ static void pulse_relay(void *arg)
     ESP_LOGI(TAG, "Relay pulse complete");
 
     resetting_state = true;
-    lock::chip_stack_lock(portMAX_DELAY);
+    chip::DeviceLayer::PlatformMgr().LockChipStack();
     esp_matter_attr_val_t val = esp_matter_bool(false);
     attribute::update(garage_endpoint_id, OnOff::Id, OnOff::Attributes::OnOff::Id, &val);
-    lock::chip_stack_unlock();
+    chip::DeviceLayer::PlatformMgr().UnlockChipStack();
     resetting_state = false;
 
     vTaskDelete(NULL);
